@@ -29,12 +29,22 @@ def one_hot_encode_seqs(seq_arr: List[str]) -> ArrayLike:
                 G -> [0, 0, 0, 1]
             Then, AGA -> [1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0]
     """
-    pass
+    encoding = {
+        "A": [1, 0, 0, 0],
+        "T": [0, 1, 0, 0],
+        "C": [0, 0, 1, 0],
+        "G": [0, 0, 0, 1]
+    }
+    encoded_seq_arr = np.zeros((len(seq_arr), len(seq_arr[0])*4))
+    for seq_idx, seq in enumerate(seq_arr):
+        for base_idx, base in enumerate(seq):
+            encoded_seq_arr[seq_idx, base_idx*4:base_idx*4+4] += encoding[base]
+
+    return encoded_seq_arr
 
 
-def sample_seqs(
-        seqs: List[str],
-        labels: List[bool]) -> Tuple[List[str], List[bool]]:
+def sample_seqs(seqs: List[str],
+                labels: List[bool]) -> Tuple[List[str], List[bool]]:
     """
     This function should sample your sequences to account for class imbalance. 
     Consider this as a sampling scheme with replacement.
@@ -51,4 +61,19 @@ def sample_seqs(
         sampled_labels: List[bool]
             List of labels for the sampled sequences
     """
-    pass
+    pos_seqs = np.array(seqs, dtype=object)[labels]
+    neg_seqs = np.array(seqs, dtype=object)[[not label for label in labels]]
+
+    if len(pos_seqs) > len(neg_seqs):
+        boosted = list(neg_seqs[np.random.randint(len(neg_seqs), size=len(pos_seqs))])
+        balanced_seqs = list(pos_seqs) + boosted
+        balanced_labels = [True] * len(pos_seqs) + [False] * len(boosted)
+    elif len(pos_seqs) < len(neg_seqs):
+        boosted = list(pos_seqs[np.random.randint(len(pos_seqs), size=len(neg_seqs))])
+        balanced_seqs = list(neg_seqs) + boosted
+        balanced_labels = [False] * len(neg_seqs) + [True] * len(boosted)
+    else:
+        balanced_seqs = seqs
+        balanced_labels = labels
+
+    return balanced_seqs, balanced_labels
