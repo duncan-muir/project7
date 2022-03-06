@@ -1,5 +1,7 @@
 # Project 7
 Fully Connected Neural Network
+Duncan Muir
+![BuildStatus](https://github.com/duncan-muir/project7/workflows/project7/badge.svg?event=push)
 
 
 # Assigment
