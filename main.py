@@ -5,24 +5,23 @@ from sklearn.model_selection import train_test_split
 from nn import nn, io, preprocess
 
 def main():
-    # digits = sklearn.datasets.load_digits()
-    # X_train, X_test, y_train, y_test = train_test_split(digits.data, digits.target, test_size=.1, random_state=27)
-    # net = nn.NeuralNetwork(
-    #     nn_arch = [{'input_dim': 64, 'output_dim': 16, 'activation': 'sigmoid'},
-    #                {'input_dim': 16, 'output_dim': 64, 'activation': 'relu'}],
-    #     lr=1e-1,
-    #     seed=0,
-    #     batch_size=600,
-    #     epochs=1000,
-    #     loss_function="mse")
-    #
-    # print(net._param_dict)
-    # train_loss = net.fit(X_train, X_train, X_test, X_test)
-    #
-    # pred = net.predict(digits.data[0])
-    # plt.imshow(pred.reshape(8,8), vmin=4)
-    # plt.colorbar()
-    # plt.show()
+    digits = sklearn.datasets.load_digits()
+    X_train, X_test, y_train, y_test = train_test_split(digits.data, digits.target, test_size=.1, random_state=27)
+    net = nn.NeuralNetwork(
+        nn_arch = [{'input_dim': 64, 'output_dim': 16, 'activation': 'sigmoid'},
+                   {'input_dim': 16, 'output_dim': 64, 'activation': 'relu'}],
+        lr=1e-1,
+        rand=np.random.RandomState(0),
+        batch_size=600,
+        epochs=1000,
+        loss_function="mse")
+
+    train_loss = net.fit(X_train, X_train, X_test, X_test)
+
+    pred = net.predict(digits.data[0])
+    plt.imshow(pred.reshape(8,8), vmin=4)
+    plt.colorbar()
+    plt.show()
 
     net = nn.NeuralNetwork(
         nn_arch = [{'input_dim': 5, 'output_dim': 1, 'activation': 'sigmoid'}],

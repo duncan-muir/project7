@@ -2,13 +2,15 @@
 
 
 # Importing Dependencies
-import sys
-
 import numpy as np
 from typing import List, Dict, Tuple, Union
 from numpy.typing import ArrayLike
-#import sys
-import matplotlib.pyplot as plt
+import sys
+
+
+class NeuralNetworkException(Exception):
+    pass
+
 
 # Neural Network Class Definition
 class NeuralNetwork:
@@ -23,8 +25,8 @@ class NeuralNetwork:
             and an 8 dimensional output.
         lr: float
             Learning Rate (alpha).
-        seed: int
-            Random seed to ensure reproducibility.
+        rand: np.random.RandomState
+            Random state to ensure reproducibility.
         batch_size: int
             Size of mini-batches used for training.
         epochs: int
@@ -39,15 +41,15 @@ class NeuralNetwork:
     def __init__(self,
                  nn_arch: List[Dict[str, Union[int, str]]],
                  lr: float,
-                 seed: int,
                  batch_size: int,
                  epochs: int,
-                 loss_function: str):
+                 loss_function: str,
+                 rand: np.random.RandomState = np.random.RandomState()):
         # Saving architecture
         self.arch = nn_arch
         # Saving hyperparameters
         self._lr = lr
-        self._seed = seed
+        self.rand = rand
         self._epochs = epochs
         if loss_function == "mse":
             self._loss_func = self._mean_squared_error
@@ -55,6 +57,7 @@ class NeuralNetwork:
             self._loss_func = self._binary_cross_entropy
         else:
             print(f"Unknown loss function provided: {loss_function} \n Exiting ...")
+            sys.exit(0)
         self.loss_function_name = loss_function
 
         self._batch_size = batch_size
@@ -73,8 +76,7 @@ class NeuralNetwork:
             param_dict: Dict[str, ArrayLike]
                 Dictionary of parameters in neural network.
         """
-        # seeding numpy random
-        np.random.seed(self._seed)
+
         # defining parameter dictionary
         param_dict = {}
         # initializing all layers in the NN
@@ -83,9 +85,9 @@ class NeuralNetwork:
             input_dim = layer['input_dim']
             output_dim = layer['output_dim']
             # initializing weight matrices
-            param_dict['W' + str(layer_idx)] = np.random.randn(output_dim, input_dim) * 0.1
+            param_dict['W' + str(layer_idx)] = self.rand.randn(output_dim, input_dim) * 0.1
             # initializing bias matrices
-            param_dict['b' + str(layer_idx)] = np.random.randn(output_dim, 1) * 0.1
+            param_dict['b' + str(layer_idx)] = self.rand.randn(output_dim, 1) * 0.1
         return param_dict
 
     def _single_forward(self,
@@ -179,7 +181,12 @@ class NeuralNetwork:
                 Partial derivative of loss function with respect to current layer bias matrix.
         """
 
-        dA_curr_dZ = self._relu_backprop(dA_curr, Z_curr)
+        if activation_curr == "relu":
+            dA_curr_dZ = self._relu_backprop(dA_curr, Z_curr)
+        elif activation_curr == "sigmoid":
+            dA_curr_dZ = self._sigmoid_backprop(dA_curr, Z_curr)
+        else:
+            raise NeuralNetworkException("Unknown Activation Function")
 
         delta_A = np.dot(dA_curr_dZ, W_curr)
 
@@ -212,7 +219,7 @@ class NeuralNetwork:
         elif self.loss_function_name == "bce":
             dA_curr = self._binary_cross_entropy_backprop(y, y_hat)
         else:
-            raise Exception
+            raise NeuralNetworkException("Unknown loss function provided")
 
         for idx, layer in reversed(list(enumerate(self.arch))):
             layer_idx = idx + 1
@@ -246,7 +253,6 @@ class NeuralNetwork:
             self._param_dict["W" + str(layer_idx)] -= grad_dict["deltaW" + str(layer_idx)] * self._lr
             self._param_dict["b" + str(layer_idx)] -= grad_dict["deltab" + str(layer_idx)] * self._lr
 
-    # TODO
     def fit(self,
             X_train: ArrayLike,
             y_train: ArrayLike,
@@ -288,16 +294,11 @@ class NeuralNetwork:
 
                 self._update_params(grad_dict)
 
-
-
-            #sys.exit(0)
-            train_losses.append(np.mean(epoch_train_losses))
+            train_losses.append(np.mean(epoch_train_losses).item())
 
             val_pred, _ = self.forward(X_val)
             val_loss = self._loss_func(y_val, val_pred)
             val_losses.append(val_loss)
-            #print(epoch_train_losses)
-            #sys.exit(0)
 
         return train_losses, val_losses
 
@@ -379,8 +380,6 @@ class NeuralNetwork:
                 Partial derivative of current layer Z matrix.
         """
         d_relu = (Z > 0).astype(int)
-        # TODO
-        # This seems fucked
         return d_relu * dA
 
     @staticmethod
@@ -417,7 +416,7 @@ class NeuralNetwork:
             dA: ArrayLike
                 partial derivative of loss with respect to A matrix.
         """
-        return y_hat - y # TODO WATCH OUT THIS MIGHT BE REVERSED
+        return y_hat - y
 
     @staticmethod
     def _mean_squared_error(y: ArrayLike, y_hat: ArrayLike) -> float:
@@ -491,4 +490,4 @@ class NeuralNetwork:
         elif func_name == "sigmoid":
             return self._sigmoid
         else:
-            raise Exception
+            raise NeuralNetworkException("Unknown Activation Function Provided")

@@ -14,7 +14,7 @@ def test_forward():
         nn_arch = [{'input_dim': 2, 'output_dim': 2, 'activation': 'relu'},
                    {'input_dim': 2, 'output_dim': 1, 'activation': 'relu'}],
         lr=1e-1,
-        seed=0,
+        rand=np.random.RandomState(0),
         batch_size=1,
         epochs=10,
         loss_function="mse")
@@ -37,7 +37,7 @@ def test_single_forward():
     net = nn.NeuralNetwork(
         nn_arch=[{'input_dim': 5, 'output_dim': 1, 'activation': 'sigmoid'}],
         lr=1e-3,
-        seed=0,
+        rand=np.random.RandomState(0),
         batch_size=1,
         epochs=10,
         loss_function="mse")
@@ -49,13 +49,50 @@ def test_single_forward():
     assert net._single_forward(W_curr, b_curr, A_prev, "relu") == (np.array([[151]]), np.array([[151]]))
 
 
-
 def test_single_backprop():
-    pass
+    net = nn.NeuralNetwork(
+        nn_arch=[{'input_dim': 5, 'output_dim': 1, 'activation': 'sigmoid'}],
+        lr=1e-3,
+        rand=np.random.RandomState(0),
+        batch_size=1,
+        epochs=10,
+        loss_function="mse")
+
+    W_curr = np.array([[1, 2, 3, 4, 5]])
+    b_curr = np.array([[1]])
+    A_prev = np.array([[10, 10, 10, 10, 10]])
+    Z_curr = np.array([[100]])
+    dA_curr = np.array([[2]])
+
+    dA_prev, dW_curr, db_curr = net._single_backprop(W_curr, b_curr, Z_curr, A_prev, dA_curr, "relu")
+
+    assert np.array_equal(dW_curr, np.array([[20, 20, 20, 20, 20]]))
+    assert np.array_equal(dA_prev, np.array([[2, 4, 6, 8, 10]]))
+    assert np.array_equal(db_curr, np.array([[2]]))
 
 
 def test_predict():
-    pass
+    """
+    Test prediction computation.
+    """
+    net = nn.NeuralNetwork(
+        nn_arch=[{'input_dim': 2, 'output_dim': 2, 'activation': 'relu'},
+                 {'input_dim': 2, 'output_dim': 1, 'activation': 'relu'}],
+        lr=1e-1,
+        rand=np.random.RandomState(0),
+        batch_size=1,
+        epochs=10,
+        loss_function="mse")
+
+    net._param_dict = {"W1": np.array([[2, 2],
+                                       [2, 2]]),
+                       "b1": np.array([[1], [1]]),
+                       "W2": np.array([[2, 2]]),
+                       "b2": np.array([[1]])}
+    output, _ = net.forward(np.array([10, 10]))
+    pred = net.predict(np.array([10, 10]))
+    assert output == pred == 165
+
 
 
 def test_binary_cross_entropy():
@@ -65,7 +102,7 @@ def test_binary_cross_entropy():
     net = nn.NeuralNetwork(
         nn_arch=[{'input_dim': 5, 'output_dim': 1, 'activation': 'sigmoid'}],
         lr=1e-3,
-        seed=0,
+        rand=np.random.RandomState(0),
         batch_size=1,
         epochs=10,
         loss_function="bce")
@@ -80,7 +117,7 @@ def test_binary_cross_entropy_backprop():
     net = nn.NeuralNetwork(
         nn_arch=[{'input_dim': 5, 'output_dim': 1, 'activation': 'sigmoid'}],
         lr=1e-3,
-        seed=0,
+        rand=np.random.RandomState(0),
         batch_size=1,
         epochs=10,
         loss_function="bce")
@@ -95,7 +132,7 @@ def test_mean_squared_error():
     net = nn.NeuralNetwork(
         nn_arch=[{'input_dim': 5, 'output_dim': 1, 'activation': 'sigmoid'}],
         lr=1e-3,
-        seed=0,
+        rand=np.random.RandomState(0),
         batch_size=1,
         epochs=10,
         loss_function="mse")
@@ -110,7 +147,7 @@ def test_mean_squared_error_backprop():
     net = nn.NeuralNetwork(
         nn_arch=[{'input_dim': 5, 'output_dim': 1, 'activation': 'sigmoid'}],
         lr=1e-3,
-        seed=0,
+        rand=np.random.RandomState(0),
         batch_size=1,
         epochs=10,
         loss_function="mse")
